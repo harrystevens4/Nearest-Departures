@@ -9,6 +9,12 @@ import android.widget.EditText;
 
 import com.google.android.material.color.DynamicColors;
 
+import org.json.JSONException;
+
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle saved_instance_state){
@@ -35,6 +41,19 @@ public class MainActivity extends Activity {
         });
         //super call
         super.onCreate(saved_instance_state);
-        NationalRailApi national_rail_api = new NationalRailApi(this,api_key,"CTF");
+        ExecutorService execution_queue = Executors.newSingleThreadExecutor();
+        NationalRailAPI national_rail_api = new NationalRailAPI(api_key);
+        execution_queue.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    national_rail_api.getDeparturesFor("CTF");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
     }
 }
