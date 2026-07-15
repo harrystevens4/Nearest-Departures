@@ -2,21 +2,15 @@ package stevens.server.nearestdepartures;
 
 import static android.app.PendingIntent.FLAG_IMMUTABLE;
 import static android.content.Context.MODE_PRIVATE;
-import static android.content.Intent.ACTION_SCREEN_ON;
 import static android.content.Intent.ACTION_USER_PRESENT;
-import static android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS;
 
-import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.os.PowerManager;
 import android.util.Log;
 import android.widget.RemoteViews;
 
@@ -27,20 +21,16 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.LocalTime;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of App Widget functionality.
  */
 public class NearestDeparturesWidget extends AppWidgetProvider {
 
-    private static ExecutorService update_loop;
+    private static final ExecutorService update_loop = Executors.newSingleThreadExecutor();;
 
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,
                                 int appWidgetId) {
@@ -56,9 +46,6 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
         Intent update_intent = new Intent(context,NearestDeparturesWidget.class);
         update_intent.setAction("REFRESH_DATA"); //click station name to refresh
         views.setOnClickPendingIntent(R.id.nearest_departures_widget_station_name,PendingIntent.getBroadcast(context,0,update_intent,FLAG_IMMUTABLE));
-
-        //update thread
-        update_loop = Executors.newSingleThreadExecutor();
 
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
@@ -85,7 +72,7 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
                        //instantiate the national rail api
                        SharedPreferences shared_preferences = context.getSharedPreferences("api_keys", MODE_PRIVATE);
                        String api_key = shared_preferences.getString("LDBWS", "");
-                       NationalRailAPI national_rail_api = new NationalRailAPI(api_key);
+                       NationalRailAPI national_rail_api = new NationalRailAPI(api_key, null);
                        NationalRailAPI.Departures station_departures = national_rail_api.getDeparturesFor("BFR");
                        NationalRailAPI.Departures.TrainService[] services = station_departures.getDepartures();
                        //populate departure board

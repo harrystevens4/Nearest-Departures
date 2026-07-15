@@ -4,8 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:theme="@style/Theme.Material3.DayNight.NoActionBar"
-    android:orientation="vertical">
+    android:background="@android:color/system_neutral1_800"
+    android:orientation="vertical"
+    android:theme="@style/Theme.Material3.DayNight.NoActionBar">
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
@@ -37,8 +38,66 @@
                 android:layout_height="wrap_content"
                 android:ems="10"
                 android:inputType="text"
-                android:selectAllOnFocus="false"
-                android:text="Name" />
+                android:selectAllOnFocus="false" />
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginTop="10dp"
+        android:background="@color/cardview_dark_background"
+        android:padding="3dp"
+        app:cardBackgroundColor="@android:color/system_accent1_300"
+        app:cardCornerRadius="20dp"
+        app:contentPadding="15dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="knowledgebase api key"
+                android:textAppearance="@android:style/TextAppearance.Material.Body2"
+                android:textColor="@android:color/system_text_primary_inverse_dark" />
+
+            <EditText
+                android:id="@+id/knowledgebase_api_key_entry"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:inputType="text"
+                android:selectAllOnFocus="false" />
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginTop="10dp"
+        android:background="@color/cardview_dark_background"
+        android:padding="3dp"
+        app:cardBackgroundColor="@android:color/system_accent1_300"
+        app:cardCornerRadius="20dp"
+        app:contentPadding="15dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/update_station_database_button"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="update station database" />
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>

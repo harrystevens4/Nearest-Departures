@@ -108,17 +108,22 @@ public class NationalRailAPI {
                 this.stations[i] = station_info_object;
             }
         }
+        public Stations(StationInfo[] stations){
+            this.stations = stations;
+        }
     }
-    private final String api_key;
-    public NationalRailAPI(@NonNull String api_key){
-        this.api_key = api_key;
+    private final String LDBWS_api_key;
+    private final String knowledgebase_api_key;
+    public NationalRailAPI(String LDBWS_api_key, String knowledgebase_api_key){
+        this.LDBWS_api_key = LDBWS_api_key;
+        this.knowledgebase_api_key = knowledgebase_api_key;
     }
     public Departures getDeparturesFor(String crs) throws IOException, JSONException {
         URL request_url = new URL("https://api1.raildata.org.uk/1010-live-departure-board-dep1_2/LDBWS/api/20220120/GetDepartureBoard/"+crs);
         Log.d("NationalRailAPI","making request to "+request_url);
         HttpURLConnection connection =  (HttpURLConnection) request_url.openConnection();
         //request headers
-        connection.setRequestProperty("x-apikey",this.api_key);
+        connection.setRequestProperty("x-apikey",this.LDBWS_api_key);
         connection.setDoInput(true);
         connection.connect();
         int response_code = connection.getResponseCode();
@@ -140,7 +145,7 @@ public class NationalRailAPI {
         Log.d("NationalRailAPI","making request to "+request_url);
         HttpURLConnection connection =  (HttpURLConnection) request_url.openConnection();
         //request headers
-        connection.setRequestProperty("x-apikey",this.api_key);
+        connection.setRequestProperty("x-apikey",this.knowledgebase_api_key);
         connection.setDoInput(true);
         connection.connect();
         int response_code = connection.getResponseCode();
