@@ -27,7 +27,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.LocalTime;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -36,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class NearestDeparturesWidget extends AppWidgetProvider {
 
-    private static ScheduledExecutorService update_loop;
+    private static ExecutorService update_loop;
 
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,
                                 int appWidgetId) {
@@ -49,9 +53,12 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
         Intent open_app_intent = new Intent(context,MainActivity.class);
         PendingIntent open_app_pending_intent = PendingIntent.getActivity(context,0,open_app_intent,FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.nearest_departures_widget_layout,open_app_pending_intent);
+        Intent update_intent = new Intent(context,NearestDeparturesWidget.class);
+        update_intent.setAction("REFRESH_DATA"); //click station name to refresh
+        views.setOnClickPendingIntent(R.id.nearest_departures_widget_station_name,PendingIntent.getBroadcast(context,0,update_intent,FLAG_IMMUTABLE));
 
         //update thread
-        update_loop = Executors.newSingleThreadScheduledExecutor();
+        update_loop = Executors.newSingleThreadExecutor();
 
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
@@ -64,7 +71,7 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
             Log.d("NearestDeparturesWidget","Screen on event detected");
         } else if (Objects.equals(intent.getAction(),"REFRESH_DATA")) {
             //schedule an update
-            update_loop.submit(new Runnable() {
+            Future<?> future = update_loop.submit(new Runnable() {
                @Override
                public void run() {
                    RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.nearest_departures_widget);

@@ -83,6 +83,32 @@ public class NationalRailAPI {
             }
         }
     }
+    public static class Stations {
+        public static class StationInfo {
+            public double longitude;
+            public double latitude;
+            public String station_name;
+            public String station_crs;
+        }
+        public final StationInfo[] stations;
+        public Stations(JSONObject stations_json) throws JSONException {
+            //we NEED to process this data IMMEDIATELY as there are over 2,588 stations which will kill ram usage
+            JSONArray station_list = stations_json.getJSONArray("stations_json");
+            this.stations = new StationInfo[station_list.length()];
+            for (int i = 0; i < station_list.length(); i++){
+                JSONObject station_info = station_list.getJSONObject(i);
+                StationInfo station_info_object = new StationInfo();
+                //grab only the stuff we need
+                station_info_object.station_name = station_info.getString("name");
+                station_info_object.station_crs = station_info.getString("crsCode");
+                JSONObject coordinates = station_info.getJSONObject("location");
+                station_info_object.latitude = coordinates.getDouble("latitude");
+                station_info_object.longitude = coordinates.getDouble("longitude");
+                //stuff it into our array
+                this.stations[i] = station_info_object;
+            }
+        }
+    }
     private final String api_key;
     public NationalRailAPI(@NonNull String api_key){
         this.api_key = api_key;
@@ -108,5 +134,26 @@ public class NationalRailAPI {
         connection.disconnect();
         //convert to departures object
         return new Departures(json_response);
+    }
+    public Stations getAllStations() throws IOException, JSONException {
+        URL request_url = new URL("https://api1.raildata.org.uk/1010-nationalrail-knowledgebase-stations-feed-_json_---production5_0/stations");
+        Log.d("NationalRailAPI","making request to "+request_url);
+        HttpURLConnection connection =  (HttpURLConnection) request_url.openConnection();
+        //request headers
+        connection.setRequestProperty("x-apikey",this.api_key);
+        connection.setDoInput(true);
+        connection.connect();
+        int response_code = connection.getResponseCode();
+        Log.d("NationalRailAPI","request returned code "+ response_code);
+        if (response_code < 200 || response_code >= 300){
+            throw new IOException("request returned code "+ response_code);
+        }
+        //get body
+        byte[] body = connection.getInputStream().readAllBytes();
+        //parse json
+        JSONObject json_response = new JSONObject(new String(body));
+        connection.disconnect();
+        //convert to departures object
+        return new Stations(json_response);
     }
 }

@@ -71,12 +71,13 @@ public class MainActivity extends Activity {
         Intent update_intent = new Intent(this,NearestDeparturesWidget.class);
         update_intent.setAction("REFRESH_DATA");
         this.sendBroadcast(update_intent);
-        alarm_manager.setInexactRepeating(AlarmManager.RTC_WAKEUP,0,30000, PendingIntent.getBroadcast(this,1,update_intent,PendingIntent.FLAG_IMMUTABLE));
+        alarm_manager.setInexactRepeating(AlarmManager.RTC_WAKEUP,5000,30000, PendingIntent.getBroadcast(this,1,update_intent,PendingIntent.FLAG_IMMUTABLE));
 
         //screen on events
         this.registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                //refresh data when user unlocks phone
                 Log.d("NearestDeparturesWidget","Screen on event detected");
                 Intent update_intent = new Intent(context,NearestDeparturesWidget.class);
                 update_intent.setAction("REFRESH_DATA");
