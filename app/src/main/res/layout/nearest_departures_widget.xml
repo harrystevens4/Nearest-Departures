@@ -1,23 +1,27 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/nearest_departures_widget_layout"
+    style="@style/Theme.Material3.DynamicColors.DayNight"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_margin="10dp"
+    android:background="@android:color/system_neutral1_1000"
     android:orientation="vertical"
-    android:theme="@style/Theme.NearestDepartures.AppWidgetContainer">
+    android:padding="15dp">
 
     <TextView
         android:id="@+id/nearest_departures_widget_station_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:contentDescription="@string/appwidget_text"
         android:text="no departures available"
-        android:textSize="24sp"
-        android:textStyle="bold|italic" />
+        android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+        android:textColor="@android:color/system_text_primary_inverse_light"
+        android:textFontWeight="500" />
 
     <TextView
         android:id="@+id/nearest_departures_widget_departures_board"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="TextView" />
+        android:text="TextView"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textColor="@android:color/system_text_primary_inverse_light" />
 </LinearLayout>
