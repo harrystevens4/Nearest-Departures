@@ -43,24 +43,5 @@ public class MainActivity extends Activity {
         });
         //super call
         super.onCreate(saved_instance_state);
-        ExecutorService execution_queue = Executors.newSingleThreadExecutor();
-        NationalRailAPI national_rail_api = new NationalRailAPI(api_key);
-        execution_queue.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    NationalRailAPI.Departures station_departures = national_rail_api.getDeparturesFor("CTF");
-                    NationalRailAPI.Departures.TrainService[] services = station_departures.getDepartures();
-                    for (NationalRailAPI.Departures.TrainService service : services) {
-                        Log.d("MainActivity", service.getDestinationName()+" "+service.getDepartureTime());
-                    }
-//                    Log.d("MainActivity",""+station_departures);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (JSONException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
     }
 }
