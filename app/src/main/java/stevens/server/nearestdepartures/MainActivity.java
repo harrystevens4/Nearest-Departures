@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.widget.EditText;
 
 import com.google.android.material.color.DynamicColors;
@@ -12,6 +13,7 @@ import com.google.android.material.color.DynamicColors;
 import org.json.JSONException;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -47,7 +49,12 @@ public class MainActivity extends Activity {
             @Override
             public void run() {
                 try {
-                    national_rail_api.getDeparturesFor("CTF");
+                    NationalRailAPI.Departures station_departures = national_rail_api.getDeparturesFor("CTF");
+                    NationalRailAPI.Departures.TrainService[] services = station_departures.getDepartures();
+                    for (NationalRailAPI.Departures.TrainService service : services) {
+                        Log.d("MainActivity", service.getDestinationName()+" "+service.getDepartureTime());
+                    }
+//                    Log.d("MainActivity",""+station_departures);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 } catch (JSONException e) {
