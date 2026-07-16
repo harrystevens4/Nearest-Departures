@@ -11,4 +11,6 @@ public interface StationInfoDao {
     List<StationInfo> getAllStations();
     @Query("SELECT crs FROM stations LIMIT 10")
     List<String> getAllStationsCrs();
+    @Query(" SELECT * FROM stations WHERE crs = :crs")
+    StationInfo getStationInfo(String crs);
 }

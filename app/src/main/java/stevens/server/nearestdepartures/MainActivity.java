@@ -53,9 +53,6 @@ public class MainActivity extends Activity {
         Log.d("MainActivity","opening stations database");
         //TODO implement this
         //SQLiteDatabase.openDatabase(db_path,new SQLiteDatabase.OpenParams.Builder().addOpenFlags(OPEN_READONLY).build());
-        this.station_database = Room.databaseBuilder(getApplicationContext(),StationInfoDatabase.class,"station-info-db")
-                .createFromAsset("stations.sqlite3")
-                .build();
 
         //notification channel
         NotificationManager notification_manager = this.getSystemService(NotificationManager.class);
@@ -160,9 +157,18 @@ public class MainActivity extends Activity {
     }
 
     public void update_location(){
-        Log.d("NearestDeparturesWidget","fetching database info...");
-        //get station info
-        List<String> station_info = this.station_database.stationInfoDao().getAllStationsCrs();
-        Log.d("NearestDeparturesWidget",""+station_info);
+        try {
+            Log.d("NearestDeparturesWidget", "fetching database info...");
+            StationInfoDatabase station_database = Room.databaseBuilder(getApplicationContext(), StationInfoDatabase.class,"station-info.db")
+                    .createFromAsset("stations.sqlite3")
+                    .fallbackToDestructiveMigration(true)
+                    .build();
+            //get station info
+            StationInfoDao station_info_dao = station_database.stationInfoDao();
+            StationInfo station_info = station_info_dao.getStationInfo("CTF");
+            Log.d("NearestDeparturesWidget", "" + station_info);
+        } catch (Exception e){
+            Log.e("MainActivity","location update failed: "+e);
+        }
     }
 }
