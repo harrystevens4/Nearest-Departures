@@ -1,6 +1,7 @@
 package stevens.server.nearestdepartures;
 
 import static android.content.Intent.ACTION_USER_PRESENT;
+import static android.database.sqlite.SQLiteDatabase.OPEN_READONLY;
 
 import android.Manifest;
 import android.app.Activity;
@@ -15,6 +16,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -23,12 +25,17 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import androidx.room.Room;
+import androidx.room.RoomDatabase;
+
 import com.google.android.material.color.DynamicColors;
 
 import org.json.JSONException;
 
+import java.io.File;
 import java.io.IOException;
 import java.security.Security;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -36,11 +43,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends Activity {
     private ScheduledExecutorService worker_thread;
-    private AtomicBoolean currently_updating_station_database = new AtomicBoolean(false);
+    public StationInfoDatabase station_database;
     @Override
     public void onCreate(Bundle saved_instance_state){
         //setup worker thread for later use
         this.worker_thread = Executors.newSingleThreadScheduledExecutor();
+
+        //open stations database
+        Log.d("MainActivity","opening stations database");
+        //TODO implement this
+        //SQLiteDatabase.openDatabase(db_path,new SQLiteDatabase.OpenParams.Builder().addOpenFlags(OPEN_READONLY).build());
+        this.station_database = Room.databaseBuilder(getApplicationContext(),StationInfoDatabase.class,"station-info-db")
+                .createFromAsset("stations.sqlite3")
+                .build();
 
         //notification channel
         NotificationManager notification_manager = this.getSystemService(NotificationManager.class);
@@ -91,36 +106,6 @@ public class MainActivity extends Activity {
             @Override public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
             @Override public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
         });
-        update_station_database_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                worker_thread.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.d("MainActivity","updating station database");
-                        if (currently_updating_station_database.getAndSet(true)){
-                            Log.d("MainActivity","aborting update: already updating");
-                            return;
-                        }
-                        show_notification("station database","updating...");
-                        //instantiate the national rail api
-                        SharedPreferences shared_preferences = getSharedPreferences("api_keys", MODE_PRIVATE);
-                        String api_key = shared_preferences.getString("knowledgebase", "");
-                        NationalRailAPI national_rail_api = new NationalRailAPI(null, knowledgebase_api_key);
-                        //fetch stations
-                        try {
-                            NationalRailAPI.Stations stations = national_rail_api.getAllStations();
-                            Log.d("MainActivity","station database update complete");
-                            show_notification("station database","update complete");
-                        } catch (IOException | JSONException e) {
-                            Log.e("MainActivity","Error updating station database: "+e);
-                            show_notification("station database","update failed: "+e);
-                        }
-                    }
-                });
-            }
-        });
-
 
         //request permissions
         if (this.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -151,6 +136,14 @@ public class MainActivity extends Activity {
             }
         },new IntentFilter(ACTION_USER_PRESENT));
 
+        //schedule a location update
+        this.worker_thread.submit(new Runnable() {
+            @Override
+            public void run() {
+                update_location();
+            }
+        });
+
         //super call
         super.onCreate(saved_instance_state);
     }
@@ -164,5 +157,12 @@ public class MainActivity extends Activity {
                 .build();
         NotificationManager notification_manager = this.getSystemService(NotificationManager.class);
         notification_manager.notify(0,notification);
+    }
+
+    public void update_location(){
+        Log.d("NearestDeparturesWidget","fetching database info...");
+        //get station info
+        List<String> station_info = this.station_database.stationInfoDao().getAllStationsCrs();
+        Log.d("NearestDeparturesWidget",""+station_info);
     }
 }

@@ -10,6 +10,12 @@ activityCompose = "1.13.0"
 composeBom = "2024.09.00"
 cardview = "1.0.0"
 material = "1.14.0"
+roomCommon = "2.6.0-alpha01"
+roomCompiler = "2.6.0-alpha01"
+roomGuava = "2.6.0-alpha01"
+roomPagingRxjava3 = "2.6.0-alpha01"
+roomRuntime = "2.8.4"
+roomCompilerVersion = "2.8.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -28,6 +34,12 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-room-common = { group = "androidx.room", name = "room-common", version.ref = "roomCommon" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomCompiler" }
+androidx-room-guava = { group = "androidx.room", name = "room-guava", version.ref = "roomGuava" }
+androidx-room-paging-rxjava3 = { group = "androidx.room", name = "room-paging-rxjava3", version.ref = "roomPagingRxjava3" }
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomRuntime" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomCompilerVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
