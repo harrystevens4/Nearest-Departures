@@ -26,6 +26,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import stevens.server.nearestdepartures.ui.theme.MainApplication;
+
 /**
  * Implementation of App Widget functionality.
  */
@@ -70,11 +72,13 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
                            Log.e("NearestDeparturesWidget", "Could not lookup hostname for LDBWS api");
                            return;
                        }
+                       //grab context
+                       MainApplication appContext = (MainApplication) context.getApplicationContext();
                        //instantiate the national rail api
                        SharedPreferences shared_preferences = context.getSharedPreferences("api_keys", MODE_PRIVATE);
                        String api_key = shared_preferences.getString("LDBWS", "");
                        NationalRailAPI national_rail_api = new NationalRailAPI(api_key, null);
-                       NationalRailAPI.Departures station_departures = national_rail_api.getDeparturesFor("BFR");
+                       NationalRailAPI.Departures station_departures = national_rail_api.getDeparturesFor(appContext.getCurrentLocationCrs());
                        NationalRailAPI.Departures.TrainService[] services = station_departures.getDepartures();
                        //populate departure board
                        StringBuilder departure_board_text = new StringBuilder();

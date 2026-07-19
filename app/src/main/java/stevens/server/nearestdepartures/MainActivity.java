@@ -39,22 +39,10 @@ import java.util.concurrent.ScheduledExecutorService;
 
 public class MainActivity extends Activity {
     private ScheduledExecutorService worker_thread;
-    private StationInfoDatabaseViewModel station_database_view_model;
-    public StationInfoDatabase station_database;
     @Override
     public void onCreate(Bundle saved_instance_state){
         //setup worker thread for later use
         this.worker_thread = Executors.newSingleThreadScheduledExecutor();
-
-        //open stations database
-        Log.d("MainActivity","opening stations database");
-        StationInfoDatabase station_database = Room.databaseBuilder(getApplicationContext(), StationInfoDatabase.class,"station-info.db")
-                .createFromAsset("stations.sqlite3")
-                .fallbackToDestructiveMigration(true)
-                .build();
-        //TODO am i doing this right????
-        station_database_view_model = new ViewModelProvider.AndroidViewModelFactory(this.getApplication()).create(StationInfoDatabaseViewModel.class);
-        station_database_view_model.addCloseable("database",(AutoCloseable) station_database);
 
         //notification channel
         NotificationManager notification_manager = this.getSystemService(NotificationManager.class);
@@ -139,14 +127,6 @@ public class MainActivity extends Activity {
             }
         },new IntentFilter(ACTION_USER_PRESENT));
 
-        //schedule a location update
-        this.worker_thread.submit(new Runnable() {
-            @Override
-            public void run() {
-                update_location();
-            }
-        });
-
         //super call
         super.onCreate(saved_instance_state);
     }
@@ -160,42 +140,5 @@ public class MainActivity extends Activity {
                 .build();
         NotificationManager notification_manager = this.getSystemService(NotificationManager.class);
         notification_manager.notify(0,notification);
-    }
-
-    public void update_location(){
-        try {
-            if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-                Log.e("MainActivity","user has not opted into location services");
-                return;
-            }
-            Log.d("MainActivity","fetching location...");
-            //TODO add location stuff
-            FusedLocationProviderClient location_services = LocationServices.getFusedLocationProviderClient(this);
-            Task<Location> last_location_task = location_services.getLastLocation();
-            Location last_location = Tasks.await(last_location_task);
-            Log.d("MainActivity","location: "+last_location.getLatitude()+" "+last_location.getLongitude());
-            Log.d("MainActivity", "fetching database info...");
-            //get station info
-            StationInfoDao station_info_dao = ((StationInfoDatabase)station_database_view_model.getCloseable("database")).stationInfoDao();
-            List<StationInfo> station_info = station_info_dao.getAllStations();
-            Log.d("MainActivity", "database info retrieved, calculating distances...");
-            //find the closest station
-            float min_distance = Float.POSITIVE_INFINITY;
-            String closest_station = null;
-            for (StationInfo station : station_info){
-                //calculate the distance to the station
-                Location station_location = new Location((String)null);
-                station_location.setLatitude(station.latitude);
-                station_location.setLongitude(station.longitude);
-                float distance = last_location.distanceTo(station_location);
-                if (distance < min_distance){
-                    closest_station = station.crs;
-                    min_distance = distance;
-                }
-            }
-            Log.d("MainActivity","closest station: "+closest_station+" "+min_distance+"m");
-        } catch (Exception e){
-            Log.e("MainActivity","location update failed: "+e);
-        }
     }
 }
