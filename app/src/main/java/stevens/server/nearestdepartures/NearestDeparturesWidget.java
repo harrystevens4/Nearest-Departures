@@ -31,7 +31,7 @@ import java.util.concurrent.Future;
  */
 public class NearestDeparturesWidget extends AppWidgetProvider {
 
-    private static final ExecutorService update_loop = Executors.newSingleThreadExecutor();;
+    private final ExecutorService update_loop = Executors.newSingleThreadExecutor();
 
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,
                                 int appWidgetId) {

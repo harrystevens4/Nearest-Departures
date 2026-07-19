@@ -9,7 +9,7 @@ import java.util.List;
 public interface StationInfoDao {
     @Query("SELECT * FROM stations")
     List<StationInfo> getAllStations();
-    @Query("SELECT crs FROM stations LIMIT 10")
+    @Query("SELECT crs FROM stations")
     List<String> getAllStationsCrs();
     @Query(" SELECT * FROM stations WHERE crs = :crs")
     StationInfo getStationInfo(String crs);

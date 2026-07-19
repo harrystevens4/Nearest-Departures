@@ -1,7 +1,6 @@
 package stevens.server.nearestdepartures;
 
 import static android.content.Intent.ACTION_USER_PRESENT;
-import static android.database.sqlite.SQLiteDatabase.OPEN_READONLY;
 
 import android.Manifest;
 import android.app.Activity;
@@ -16,33 +15,31 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.database.sqlite.SQLiteDatabase;
+import android.location.Location;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import androidx.lifecycle.ViewModelProvider;
 import androidx.room.Room;
-import androidx.room.RoomDatabase;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.color.DynamicColors;
 
-import org.json.JSONException;
-
-import java.io.File;
-import java.io.IOException;
 import java.security.Security;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends Activity {
     private ScheduledExecutorService worker_thread;
+    private StationInfoDatabaseViewModel station_database_view_model;
     public StationInfoDatabase station_database;
     @Override
     public void onCreate(Bundle saved_instance_state){
@@ -51,8 +48,13 @@ public class MainActivity extends Activity {
 
         //open stations database
         Log.d("MainActivity","opening stations database");
-        //TODO implement this
-        //SQLiteDatabase.openDatabase(db_path,new SQLiteDatabase.OpenParams.Builder().addOpenFlags(OPEN_READONLY).build());
+        StationInfoDatabase station_database = Room.databaseBuilder(getApplicationContext(), StationInfoDatabase.class,"station-info.db")
+                .createFromAsset("stations.sqlite3")
+                .fallbackToDestructiveMigration(true)
+                .build();
+        //TODO am i doing this right????
+        station_database_view_model = new ViewModelProvider.AndroidViewModelFactory(this.getApplication()).create(StationInfoDatabaseViewModel.class);
+        station_database_view_model.addCloseable("database",(AutoCloseable) station_database);
 
         //notification channel
         NotificationManager notification_manager = this.getSystemService(NotificationManager.class);
@@ -106,8 +108,12 @@ public class MainActivity extends Activity {
 
         //request permissions
         if (this.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Log.d("MainActivity","requesting location access");
+            Log.d("MainActivity","requesting background location access");
             this.requestPermissions(new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION},102);
+        }
+        if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.d("MainActivity","requesting fine location access");
+            this.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},104);
         }
         if (this.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             Log.d("MainActivity","requesting notification permissions");
@@ -158,15 +164,36 @@ public class MainActivity extends Activity {
 
     public void update_location(){
         try {
-            Log.d("NearestDeparturesWidget", "fetching database info...");
-            StationInfoDatabase station_database = Room.databaseBuilder(getApplicationContext(), StationInfoDatabase.class,"station-info.db")
-                    .createFromAsset("stations.sqlite3")
-                    .fallbackToDestructiveMigration(true)
-                    .build();
+            if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+                Log.e("MainActivity","user has not opted into location services");
+                return;
+            }
+            Log.d("MainActivity","fetching location...");
+            //TODO add location stuff
+            FusedLocationProviderClient location_services = LocationServices.getFusedLocationProviderClient(this);
+            Task<Location> last_location_task = location_services.getLastLocation();
+            Location last_location = Tasks.await(last_location_task);
+            Log.d("MainActivity","location: "+last_location.getLatitude()+" "+last_location.getLongitude());
+            Log.d("MainActivity", "fetching database info...");
             //get station info
-            StationInfoDao station_info_dao = station_database.stationInfoDao();
-            StationInfo station_info = station_info_dao.getStationInfo("CTF");
-            Log.d("NearestDeparturesWidget", "" + station_info);
+            StationInfoDao station_info_dao = ((StationInfoDatabase)station_database_view_model.getCloseable("database")).stationInfoDao();
+            List<StationInfo> station_info = station_info_dao.getAllStations();
+            Log.d("MainActivity", "database info retrieved, calculating distances...");
+            //find the closest station
+            float min_distance = Float.POSITIVE_INFINITY;
+            String closest_station = null;
+            for (StationInfo station : station_info){
+                //calculate the distance to the station
+                Location station_location = new Location((String)null);
+                station_location.setLatitude(station.latitude);
+                station_location.setLongitude(station.longitude);
+                float distance = last_location.distanceTo(station_location);
+                if (distance < min_distance){
+                    closest_station = station.crs;
+                    min_distance = distance;
+                }
+            }
+            Log.d("MainActivity","closest station: "+closest_station+" "+min_distance+"m");
         } catch (Exception e){
             Log.e("MainActivity","location update failed: "+e);
         }
