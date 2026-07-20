@@ -83,6 +83,7 @@ public class NationalRailAPI {
             }
         }
     }
+    //TODO remove this
     public static class Stations {
         public static class StationInfo {
             public double longitude;

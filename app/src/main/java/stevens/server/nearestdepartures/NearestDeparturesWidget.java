@@ -14,13 +14,16 @@ import android.content.SharedPreferences;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+import androidx.annotation.NonNull;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
+
 import org.json.JSONException;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.LocalTime;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -61,54 +64,66 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
             Log.d("NearestDeparturesWidget","Screen on event detected");
         } else if (Objects.equals(intent.getAction(),"REFRESH_DATA")) {
             //schedule an update
-            Future<?> future = update_loop.submit(new Runnable() {
-               @Override
-               public void run() {
-                   RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.nearest_departures_widget);
-                   try {
-                       try {
-                           InetAddress.getByName("api1.raildata.org.uk");
-                       } catch (UnknownHostException ignored) {
-                           Log.e("NearestDeparturesWidget", "Could not lookup hostname for LDBWS api");
-                           return;
-                       }
-                       //grab context
-                       MainApplication appContext = (MainApplication) context.getApplicationContext();
-                       //instantiate the national rail api
-                       SharedPreferences shared_preferences = context.getSharedPreferences("api_keys", MODE_PRIVATE);
-                       String api_key = shared_preferences.getString("LDBWS", "");
-                       NationalRailAPI national_rail_api = new NationalRailAPI(api_key, null);
-                       NationalRailAPI.Departures station_departures = national_rail_api.getDeparturesFor(appContext.getCurrentLocationCrs());
-                       NationalRailAPI.Departures.TrainService[] services = station_departures.getDepartures();
-                       //populate departure board
-                       StringBuilder departure_board_text = new StringBuilder();
-                       for (NationalRailAPI.Departures.TrainService service : services) {
-                           Log.d("MainActivity", service.getDepartureTime() + " - " + service.getDestinationName());
-                           //add each departure
-                           String departure_time_string;
-                           LocalTime departure_time = service.getDepartureTime();
-                           if (departure_time == null) {
-                               departure_time_string = "Cancelled";
-                           } else {
-                               departure_time_string = departure_time.toString();
-                           }
-                           departure_board_text.append(departure_time_string).append("  ").append(service.getDestinationName()).append("\n");
-                       }
-                       //set the station name
-                       views.setTextViewText(R.id.nearest_departures_widget_station_name, station_departures.getStationName());
-                       //update the widget
-                       views.setTextViewText(R.id.nearest_departures_widget_departures_board, departure_board_text.toString());
-                       AppWidgetManager app_widget_manager = AppWidgetManager.getInstance(context);
-                       //just update all of them rather than re requesting for each one
-                       int[] app_widget_ids = app_widget_manager.getAppWidgetIds(new ComponentName(context,NearestDeparturesWidget.class));
-                       app_widget_manager.partiallyUpdateAppWidget(app_widget_ids,views);
-                       Log.d("NearestDeparturesWidget", "updated widget with latest departures");
-                   } catch (IOException | JSONException e) {
-                       Log.e("NearestDeparturesWidget", "error fetching new departures: " + e);
-                       //throw new RuntimeException(e);
-                   }
-               }
-           });
+            //TODO switch to WorkManager
+            if (update_loop != null) {
+                Future<?> future = update_loop.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.nearest_departures_widget);
+                        try {
+                            try {
+                                InetAddress.getByName("api1.raildata.org.uk");
+                            } catch (UnknownHostException ignored) {
+                                Log.e("NearestDeparturesWidget", "Could not lookup hostname for LDBWS api");
+                                return;
+                            }
+                            //grab context
+                            MainApplication appContext = (MainApplication) context.getApplicationContext();
+                            //instantiate the national rail api
+                            SharedPreferences shared_preferences = context.getSharedPreferences("api_keys", MODE_PRIVATE);
+                            String api_key = shared_preferences.getString("LDBWS", "");
+                            NationalRailAPI national_rail_api = new NationalRailAPI(api_key, null);
+                            NationalRailAPI.Departures station_departures = national_rail_api.getDeparturesFor(appContext.getCurrentLocationCrs());
+                            NationalRailAPI.Departures.TrainService[] services = station_departures.getDepartures();
+                            //populate departure board
+                            StringBuilder departure_board_text = new StringBuilder();
+                            String departureBoardTitle = station_departures.getStationName();
+                            for (NationalRailAPI.Departures.TrainService service : services) {
+                                Log.d("MainActivity", service.getDepartureTime() + " - " + service.getDestinationName());
+                                //add each departure
+                                String departure_time_string;
+                                LocalTime departure_time = service.getDepartureTime();
+                                if (departure_time == null) {
+                                    departure_time_string = "Cancelled";
+                                } else {
+                                    departure_time_string = departure_time.toString();
+                                }
+                                departure_board_text.append(departure_time_string).append("  ").append(service.getDestinationName()).append("\n");
+                            }
+                            //set the station name
+                            views.setTextViewText(R.id.nearest_departures_widget_station_name, departureBoardTitle);
+                            //update the widget
+                            views.setTextViewText(R.id.nearest_departures_widget_departures_board, departure_board_text.toString());
+                            AppWidgetManager app_widget_manager = AppWidgetManager.getInstance(context);
+                            //just update all of them rather than re requesting for each one
+                            int[] app_widget_ids = app_widget_manager.getAppWidgetIds(new ComponentName(context, NearestDeparturesWidget.class));
+                            app_widget_manager.partiallyUpdateAppWidget(app_widget_ids, views);
+                            Log.d("NearestDeparturesWidget", "updated widget with latest departures");
+                        } catch (IOException | JSONException e) {
+                            Log.e("NearestDeparturesWidget", "error fetching new departures: " + e);
+                            //show error on widget
+                            views.setTextViewText(R.id.nearest_departures_widget_station_name, "No departures available");
+                            views.setTextViewText(R.id.nearest_departures_widget_departures_board, "you are not in range of a station");
+                            AppWidgetManager app_widget_manager = AppWidgetManager.getInstance(context);
+                            int[] app_widget_ids = app_widget_manager.getAppWidgetIds(new ComponentName(context, NearestDeparturesWidget.class));
+                            Log.e("NearestDeparturesWidget", "updating widget to reflect errors");
+                            app_widget_manager.partiallyUpdateAppWidget(app_widget_ids, views);
+                        }
+                    }
+                });
+            } else {
+                Log.e("NearestDeparturesWidget","update_loop == null");
+            }
         } else {
             super.onReceive(context, intent);
         }
@@ -131,5 +146,16 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
     @Override
     public void onDisabled(Context context) {
         // Enter relevant functionality for when the last widget is disabled
+    }
+}
+
+class TimetableFetchWorker extends Worker {
+    public TimetableFetchWorker(@NonNull Context context, @NonNull WorkerParameters parameters){
+        super(context,parameters);
+    }
+    @NonNull
+    @Override
+    public Result doWork(){
+        return Result.success();
     }
 }

@@ -24,12 +24,13 @@ public class MainApplication extends Application {
     private final StateManager state = new StateManager(this);
     private String currentLocationCrs;
     private Location lastLocation;
+    private long lastLocationUpdateTimeMs;
     public String getCurrentLocationCrs() {
-        long currentUnixTime = System.currentTimeMillis()/1000L;
         //initialise if not already
         if (currentLocationCrs == null && lastLocation == null){
             updateLocation(); //no nearby stations could also result in currentLocationCrs being null so check lastLocation has been set
-        } else if (currentUnixTime - lastLocation.getTime() > 120){
+        } else if (System.currentTimeMillis() - lastLocationUpdateTimeMs > 120000){
+            Log.d("MainApplication",(System.currentTimeMillis() - lastLocation.getTime())+"ms since last location update, refreshing...");
             updateLocation(); //update if we havent in a while
         }
         return currentLocationCrs;
@@ -40,6 +41,7 @@ public class MainApplication extends Application {
                 Log.e("MainApplication","user has not opted into location services");
                 return;
             }
+            //TODO ask for location refresh here if location is very out of date
             //fetch location
             Log.d("MainApplication","fetching location...");
             FusedLocationProviderClient location_services = LocationServices.getFusedLocationProviderClient(this);
@@ -61,6 +63,7 @@ public class MainApplication extends Application {
                 }
                 currentLocationCrs = closestStation;
             }
+            lastLocationUpdateTimeMs = System.currentTimeMillis();
             Log.d("MainApplication","closest station: "+closestStation+" "+minDistance+"m");
         } catch (Exception e){
             Log.e("MainApplication","location update failed: "+e);

@@ -12,7 +12,7 @@
         android:id="@+id/nearest_departures_widget_station_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="no departures available"
+        android:text="Click to update"
         android:textAppearance="@style/TextAppearance.AppCompat.Display1"
         android:textColor="@android:color/system_text_primary_inverse_light"
         android:textFontWeight="500" />
@@ -21,7 +21,6 @@
         android:id="@+id/nearest_departures_widget_departures_board"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="TextView"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         android:textColor="@android:color/system_text_primary_inverse_light" />
 </LinearLayout>
