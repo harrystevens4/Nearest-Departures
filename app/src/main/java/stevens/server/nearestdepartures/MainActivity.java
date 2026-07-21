@@ -33,6 +33,7 @@ import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.color.DynamicColors;
 
 import java.security.Security;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -95,17 +96,23 @@ public class MainActivity extends Activity {
         });
 
         //request permissions
-        if (this.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Log.d("MainActivity","requesting background location access");
-            this.requestPermissions(new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION},102);
-        }
+        ArrayList<String> permissionsToRequest = new ArrayList<String>();
         if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.d("MainActivity","requesting fine location access");
-            this.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},104);
+            permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }else {
+            if (this.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                Log.d("MainActivity","requesting background location access");
+                permissionsToRequest.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+            }
         }
         if (this.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             Log.d("MainActivity","requesting notification permissions");
-            this.requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},103);
+            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS);
+        }
+        if (!permissionsToRequest.isEmpty()) {
+            String[] permissionsToRequestArray = permissionsToRequest.toArray(new String[] {});
+            this.requestPermissions(permissionsToRequestArray, 106);
         }
 
         //screen on events

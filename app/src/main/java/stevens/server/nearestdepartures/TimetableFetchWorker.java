@@ -55,6 +55,7 @@ public class TimetableFetchWorker extends Worker {
                         .apply();
                 stationSelection = 0;
             }
+            if (closestStations.size() == 0) throw new RuntimeException("no stations nearby");
             String selectedStation = closestStations.get(stationSelection); //if there are multiple stations next to each other the user can cycle through them
             //instantiate the national rail api
             SharedPreferences shared_preferences = context.getSharedPreferences("api_keys", MODE_PRIVATE);
@@ -86,7 +87,7 @@ public class TimetableFetchWorker extends Worker {
             int[] app_widget_ids = app_widget_manager.getAppWidgetIds(new ComponentName(context, NearestDeparturesWidget.class));
             app_widget_manager.partiallyUpdateAppWidget(app_widget_ids, views);
             Log.d("NearestDeparturesWidget", "updated widget with latest departures");
-        } catch (IOException | JSONException e) {
+        } catch (IOException | JSONException | RuntimeException e) {
             Log.e("NearestDeparturesWidget", "error fetching new departures: " + e);
             //show error on widget
             views.setTextViewText(R.id.nearest_departures_widget_station_name, "No departures available");
