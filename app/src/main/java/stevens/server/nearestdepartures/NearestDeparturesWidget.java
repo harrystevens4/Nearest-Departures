@@ -29,11 +29,11 @@ import java.util.concurrent.Executors;
 public class NearestDeparturesWidget extends AppWidgetProvider {
 
     private final ExecutorService update_loop = Executors.newSingleThreadExecutor();
-    private static boolean hasScheduledUpdates = false;
     public final static String ACTION_REFRESH_DATA = "REFRESH_DATA";
     public final static String ACTION_SWITCH_STATIONS = "SWITCH_STATIONS";
 
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
+        Log.d("NearestDeparturesWidget","creating widget "+appWidgetId);
         // Construct the RemoteViews object
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.nearest_departures_widget);
 
@@ -48,12 +48,12 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
         switchStationsIntent.setAction(ACTION_SWITCH_STATIONS); //click station name to switch to other nearby stations
         views.setOnClickPendingIntent(R.id.nearest_departures_widget_station_name,PendingIntent.getBroadcast(context,0, switchStationsIntent,FLAG_IMMUTABLE));
 
-        //schedule widget updates
-        AlarmManager alarm_manager = context.getSystemService(AlarmManager.class);
-        alarm_manager.setInexactRepeating(AlarmManager.RTC_WAKEUP,5000,30000, PendingIntent.getBroadcast(context,1, switchStationsIntent,PendingIntent.FLAG_IMMUTABLE));
-
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
+
+        //schedule widget updates
+        AlarmManager alarm_manager = context.getSystemService(AlarmManager.class);
+        alarm_manager.setInexactRepeating(AlarmManager.RTC_WAKEUP,5000,30000, PendingIntent.getBroadcast(context,1, updateIntent,PendingIntent.FLAG_IMMUTABLE));
     }
 
     @Override

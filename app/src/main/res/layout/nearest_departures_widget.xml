@@ -20,7 +20,7 @@
     <TextView
         android:id="@+id/nearest_departures_widget_departures_board"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:text="click here to update"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         android:textColor="@android:color/system_text_primary_inverse_light" />
