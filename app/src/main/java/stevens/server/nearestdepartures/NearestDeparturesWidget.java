@@ -50,10 +50,6 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
 
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
-
-        //schedule widget updates
-        AlarmManager alarm_manager = context.getSystemService(AlarmManager.class);
-        alarm_manager.setInexactRepeating(AlarmManager.RTC_WAKEUP,5000,30000, PendingIntent.getBroadcast(context,1, updateIntent,PendingIntent.FLAG_IMMUTABLE));
     }
 
     @Override
@@ -67,7 +63,7 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                     .build();
             WorkManager
-                    .getInstance(context)
+                    .getInstance(context.getApplicationContext())
                     .enqueue(updateWidgetRequest);
         } else if (Objects.equals(intent.getAction(),ACTION_SWITCH_STATIONS)) {
             //open shared preferences

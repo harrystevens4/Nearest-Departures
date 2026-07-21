@@ -2,7 +2,10 @@ package stevens.server.nearestdepartures;
 
 import static android.content.Intent.ACTION_USER_PRESENT;
 
+import static stevens.server.nearestdepartures.NearestDeparturesWidget.ACTION_REFRESH_DATA;
+
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -23,8 +26,14 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.room.Room;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -37,6 +46,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+
+import javax.xml.datatype.Duration;
 
 public class MainActivity extends Activity {
     private ScheduledExecutorService worker_thread;
@@ -70,6 +81,19 @@ public class MainActivity extends Activity {
         Button update_station_database_button = this.findViewById(R.id.update_station_database_button);
         LDBWS_api_key_entry.setText(LDBWS_api_key);
         knowledgebase_api_key_entry.setText(knowledgebase_api_key);
+
+        //schedule widget updates
+        Intent updateIntent = new Intent(this,NearestDeparturesWidget.class);
+        updateIntent.setAction(ACTION_REFRESH_DATA); //click departures board to refresh
+        AlarmManager alarm_manager = this.getSystemService(AlarmManager.class);
+        alarm_manager.setInexactRepeating(AlarmManager.RTC_WAKEUP,5000,30000, PendingIntent.getBroadcast(this,1, updateIntent,PendingIntent.FLAG_IMMUTABLE));
+        //dummy request required here so that it does not trigger widget update when there is no work left
+        //https://issuetracker.google.com/issues/115575872
+        WorkRequest dummyRequest = new PeriodicWorkRequest.Builder(DummyWorker.class,java.time.Duration.ofSeconds(60))
+                .build();
+        WorkManager
+                .getInstance(getApplicationContext())
+                .enqueue(dummyRequest);
 
         //callbacks
         LDBWS_api_key_entry.addTextChangedListener(new TextWatcher() {
@@ -140,5 +164,17 @@ public class MainActivity extends Activity {
                 .build();
         NotificationManager notification_manager = this.getSystemService(NotificationManager.class);
         notification_manager.notify(0,notification);
+    }
+}
+
+class DummyWorker extends Worker {
+    public DummyWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+        super(context, workerParams);
+    }
+
+    @NonNull
+    @Override
+    public Result doWork() {
+        return Result.success();
     }
 }
