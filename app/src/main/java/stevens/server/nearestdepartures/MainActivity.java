@@ -108,13 +108,6 @@ public class MainActivity extends Activity {
             this.requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},103);
         }
 
-        //schedule widget updates
-        AlarmManager alarm_manager = this.getSystemService(AlarmManager.class);
-        Intent update_intent = new Intent(this,NearestDeparturesWidget.class);
-        update_intent.setAction("REFRESH_DATA");
-        this.sendBroadcast(update_intent);
-        alarm_manager.setInexactRepeating(AlarmManager.RTC_WAKEUP,5000,30000, PendingIntent.getBroadcast(this,1,update_intent,PendingIntent.FLAG_IMMUTABLE));
-
         //screen on events
         this.registerReceiver(new BroadcastReceiver() {
             @Override

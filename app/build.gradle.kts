@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.work.runtime)
     implementation(libs.material)
     implementation(libs.play.services.location)
+    implementation(libs.work.runtime)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
