@@ -16,6 +16,8 @@ import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import stevens.server.nearestdepartures.StationInfo;
@@ -24,18 +26,18 @@ import stevens.server.nearestdepartures.StationInfoDatabase;
 
 public class MainApplication extends Application {
     private final StateManager state = new StateManager(this);
-    private String currentLocationCrs;
+    private final ArrayList<String> currentLocationsCrs = new ArrayList<String>();
     private Location lastLocation;
     private long lastLocationUpdateTimeMs;
-    public String getCurrentLocationCrs() {
+    public List<String> getStationsCrsByDistance() {
         //initialise if not already
-        if (currentLocationCrs == null && lastLocation == null){
+        if (currentLocationsCrs.isEmpty() && lastLocation == null){
             updateLocation(); //no nearby stations could also result in currentLocationCrs being null so check lastLocation has been set
         } else if (System.currentTimeMillis() - lastLocationUpdateTimeMs > 120000){
             Log.d("MainApplication",(System.currentTimeMillis() - lastLocation.getTime())+"ms since last location update, refreshing...");
             updateLocation(); //update if we havent in a while
         }
-        return currentLocationCrs;
+        return currentLocationsCrs;
     }
     public void updateLocation(){
         try {
@@ -52,23 +54,39 @@ public class MainApplication extends Application {
             Task<Location> lastLocationTask = location_services.getCurrentLocation(currentLocationRequest,(CancellationToken)null);
             lastLocation = Tasks.await(lastLocationTask);
             Log.d("MainApplication","location: "+ lastLocation.getLatitude()+" "+ lastLocation.getLongitude());
-            //find the closest station
-            float minDistance = Float.POSITIVE_INFINITY;
-            String closestStation = null;
-            for (StationInfo station : state.getStationInfoList()){
-                //calculate the distance to the station
-                Location stationLocation = new Location((String)null);
-                stationLocation.setLatitude(station.latitude);
-                stationLocation.setLongitude(station.longitude);
-                float distance = lastLocation.distanceTo(stationLocation);
-                if (distance < minDistance){
-                    closestStation = station.crs;
-                    minDistance = distance;
+            //sort stations by distance
+            List<StationInfo> stationList = state.getStationInfoList();
+            stationList.sort(new Comparator<StationInfo>() {
+                @Override
+                public int compare(StationInfo station1, StationInfo station2) {
+                    Location station1Location = new Location((String)null);
+                    station1Location.setLatitude(station1.latitude);
+                    station1Location.setLongitude(station1.longitude);
+                    Location station2Location = new Location((String)null);
+                    station2Location.setLatitude(station2.latitude);
+                    station2Location.setLongitude(station2.longitude);
+                    float distance1 = lastLocation.distanceTo(station1Location);
+                    float distance2 = lastLocation.distanceTo(station2Location);
+                    return Float.compare(distance1,distance2);
                 }
-                currentLocationCrs = closestStation;
+            });
+            currentLocationsCrs.clear();
+            for (StationInfo stationInfo : stationList){
+                //maximum of 3 stations
+                if (currentLocationsCrs.size() >= 3) break;
+                //maximum distance
+                Location stationLocation = new Location((String)null);
+                stationLocation.setLatitude(stationInfo.latitude);
+                stationLocation.setLongitude(stationInfo.longitude);
+                //500m range
+                float distanceToStation = lastLocation.distanceTo(stationLocation);
+                if (distanceToStation > 1000) continue;
+                Log.d("MainApplication","found nearby station: "+stationInfo.station_name+" "+distanceToStation+"m");
+                //only store the crs
+                currentLocationsCrs.add(stationInfo.crs);
             }
             lastLocationUpdateTimeMs = System.currentTimeMillis();
-            Log.d("MainApplication","closest station: "+closestStation+" "+minDistance+"m");
+            Log.d("MainApplication","closest station: "+currentLocationsCrs.get(0));
         } catch (Exception e){
             Log.e("MainApplication","location update failed: "+e);
         }

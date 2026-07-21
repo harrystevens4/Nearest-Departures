@@ -45,7 +45,7 @@ public class NationalRailAPI {
                         departure_time_string = std;
                     } else if (Objects.equals(etd,"Cancelled")){
                         return null;
-                    } else departure_time_string = etd;
+                    } else departure_time_string = std;
                     return LocalTime.parse(departure_time_string);
                 } catch (JSONException e) {
                     return null;

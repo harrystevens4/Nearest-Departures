@@ -8,33 +8,20 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 import android.widget.RemoteViews;
 
-import androidx.annotation.NonNull;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
 
-import org.json.JSONException;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.time.LocalTime;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import stevens.server.nearestdepartures.ui.theme.MainApplication;
 
 /**
  * Implementation of App Widget functionality.
@@ -43,10 +30,10 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
 
     private final ExecutorService update_loop = Executors.newSingleThreadExecutor();
     private static boolean hasScheduledUpdates = false;
+    public final static String ACTION_REFRESH_DATA = "REFRESH_DATA";
+    public final static String ACTION_SWITCH_STATIONS = "SWITCH_STATIONS";
 
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
-
-        CharSequence widgetText = context.getString(R.string.appwidget_text);
         // Construct the RemoteViews object
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.nearest_departures_widget);
 
@@ -55,12 +42,15 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
         PendingIntent open_app_pending_intent = PendingIntent.getActivity(context,0,open_app_intent,FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.nearest_departures_widget_layout,open_app_pending_intent);
         Intent updateIntent = new Intent(context,NearestDeparturesWidget.class);
-        updateIntent.setAction("REFRESH_DATA"); //click station name to refresh
-        views.setOnClickPendingIntent(R.id.nearest_departures_widget_station_name,PendingIntent.getBroadcast(context,0,updateIntent,FLAG_IMMUTABLE));
+        updateIntent.setAction(ACTION_REFRESH_DATA); //click departures board to refresh
+        views.setOnClickPendingIntent(R.id.nearest_departures_widget_departures_board,PendingIntent.getBroadcast(context,0,updateIntent,FLAG_IMMUTABLE));
+        Intent switchStationsIntent = new Intent(context,NearestDeparturesWidget.class);
+        switchStationsIntent.setAction(ACTION_SWITCH_STATIONS); //click station name to switch to other nearby stations
+        views.setOnClickPendingIntent(R.id.nearest_departures_widget_station_name,PendingIntent.getBroadcast(context,0, switchStationsIntent,FLAG_IMMUTABLE));
 
         //schedule widget updates
         AlarmManager alarm_manager = context.getSystemService(AlarmManager.class);
-        alarm_manager.setInexactRepeating(AlarmManager.RTC_WAKEUP,5000,30000, PendingIntent.getBroadcast(context,1,updateIntent,PendingIntent.FLAG_IMMUTABLE));
+        alarm_manager.setInexactRepeating(AlarmManager.RTC_WAKEUP,5000,30000, PendingIntent.getBroadcast(context,1, switchStationsIntent,PendingIntent.FLAG_IMMUTABLE));
 
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
@@ -71,15 +61,25 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
         Log.d("NearestDeparturesWidget","onReceive("+intent.getAction()+")");
         if (Objects.equals(intent.getAction(),ACTION_USER_PRESENT)){
             Log.d("NearestDeparturesWidget","Screen on event detected");
-        } else if (Objects.equals(intent.getAction(),"REFRESH_DATA")) {
+        } else if (Objects.equals(intent.getAction(),ACTION_REFRESH_DATA)) {
             //schedule an update
-            //TODO switch to WorkManager
             WorkRequest updateWidgetRequest = new OneTimeWorkRequest.Builder(TimetableFetchWorker.class)
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                     .build();
             WorkManager
                     .getInstance(context)
                     .enqueue(updateWidgetRequest);
+        } else if (Objects.equals(intent.getAction(),ACTION_SWITCH_STATIONS)) {
+            //open shared preferences
+            SharedPreferences sharedPreferences = context.getApplicationContext().getSharedPreferences("interface_state",MODE_PRIVATE);
+            sharedPreferences
+                    .edit()
+                    .putInt("currentClosestStationSelection",sharedPreferences.getInt("currentClosestStationSelection",0)+1)
+                    .apply();
+            //update widget
+            Intent updateIntent = new Intent(context,NearestDeparturesWidget.class);
+            updateIntent.setAction(ACTION_REFRESH_DATA);
+            context.sendBroadcast(updateIntent);
         } else {
             super.onReceive(context, intent);
         }

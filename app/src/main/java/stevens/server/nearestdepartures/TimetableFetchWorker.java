@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.LocalTime;
+import java.util.List;
 
 import stevens.server.nearestdepartures.ui.theme.MainApplication;
 
@@ -41,11 +42,25 @@ public class TimetableFetchWorker extends Worker {
             }
             //grab context
             MainApplication appContext = (MainApplication) context.getApplicationContext();
+            //find the closest stations
+            List<String> closestStations = appContext.getStationsCrsByDistance();
+            //shared preferences for ui state so if the user has selected the 3rd closest station it will stay selected
+            SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("interface_state",MODE_PRIVATE);
+            int stationSelection = sharedPreferences.getInt("currentClosestStationSelection",0);
+            if (stationSelection >= closestStations.toArray().length){
+                //wrap back around
+                sharedPreferences
+                        .edit()
+                        .putInt("currentClosestStationSelection",0)
+                        .apply();
+                stationSelection = 0;
+            }
+            String selectedStation = closestStations.get(stationSelection); //if there are multiple stations next to each other the user can cycle through them
             //instantiate the national rail api
             SharedPreferences shared_preferences = context.getSharedPreferences("api_keys", MODE_PRIVATE);
             String api_key = shared_preferences.getString("LDBWS", "");
             NationalRailAPI national_rail_api = new NationalRailAPI(api_key, null);
-            NationalRailAPI.Departures station_departures = national_rail_api.getDeparturesFor(appContext.getCurrentLocationCrs());
+            NationalRailAPI.Departures station_departures = national_rail_api.getDeparturesFor(selectedStation);
             NationalRailAPI.Departures.TrainService[] services = station_departures.getDepartures();
             //populate departure board
             StringBuilder departure_board_text = new StringBuilder();
