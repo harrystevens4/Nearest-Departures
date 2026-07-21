@@ -9,8 +9,10 @@ import android.util.Log;
 
 import androidx.room.Room;
 
+import com.google.android.gms.location.CurrentLocationRequest;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 
@@ -41,11 +43,13 @@ public class MainApplication extends Application {
                 Log.e("MainApplication","user has not opted into location services");
                 return;
             }
-            //TODO ask for location refresh here if location is very out of date
             //fetch location
             Log.d("MainApplication","fetching location...");
             FusedLocationProviderClient location_services = LocationServices.getFusedLocationProviderClient(this);
-            Task<Location> lastLocationTask = location_services.getLastLocation();
+            CurrentLocationRequest currentLocationRequest = new CurrentLocationRequest.Builder()
+                    .setMaxUpdateAgeMillis(300000) //location no older than 5 minutes
+                    .build();
+            Task<Location> lastLocationTask = location_services.getCurrentLocation(currentLocationRequest,(CancellationToken)null);
             lastLocation = Tasks.await(lastLocationTask);
             Log.d("MainApplication","location: "+ lastLocation.getLatitude()+" "+ lastLocation.getLongitude());
             //find the closest station
