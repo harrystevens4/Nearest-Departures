@@ -61,9 +61,11 @@ public class TimetableFetchWorker extends Worker {
             NationalRailAPI national_rail_api = new NationalRailAPI(api_key, null);
             NationalRailAPI.Departures station_departures = national_rail_api.getDeparturesFor(selectedStation);
             NationalRailAPI.Departures.TrainService[] services = station_departures.getDepartures();
+            //prepare ListView for population
+            RemoteViews.RemoteCollectionItems.Builder timetableListViewBuilder = new RemoteViews.RemoteCollectionItems.Builder();
             //populate departure board
-            StringBuilder departure_board_text = new StringBuilder();
             String departureBoardTitle = station_departures.getStationName();
+            int id = 0;
             for (NationalRailAPI.Departures.TrainService service : services) {
                 Log.d("MainActivity", service.getDepartureTime() + " - " + service.getDestinationName());
                 //add each departure
@@ -74,12 +76,16 @@ public class TimetableFetchWorker extends Worker {
                 } else {
                     departure_time_string = departure_time.toString();
                 }
-                departure_board_text.append(departure_time_string).append("  ").append(service.getDestinationName()).append("\n");
+                String listItemText = departure_time_string+"  "+service.getDestinationName();
+                RemoteViews listItemView = new RemoteViews(context.getPackageName(),R.layout.nearest_departures_widget_list_view_item);
+                listItemView.setTextViewText(R.id.nearest_departures_widget_departures_board, listItemText);
+                timetableListViewBuilder.addItem(id,listItemView);
+                id++;
             }
             //set the station name
             views.setTextViewText(R.id.nearest_departures_widget_station_name, departureBoardTitle);
             //update the widget
-            views.setTextViewText(R.id.nearest_departures_widget_departures_board, departure_board_text.toString());
+            views.setRemoteAdapter(R.id.nearestDeparturesListView,timetableListViewBuilder.build());
             AppWidgetManager app_widget_manager = AppWidgetManager.getInstance(context);
             //just update all of them rather than re requesting for each one
             int[] app_widget_ids = app_widget_manager.getAppWidgetIds(new ComponentName(context, NearestDeparturesWidget.class));

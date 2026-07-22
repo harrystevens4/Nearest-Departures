@@ -1,4 +1,5 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nearest_departures_widget_layout"
     style="@style/Theme.Material3.DynamicColors.DayNight"
     android:layout_width="match_parent"
@@ -17,11 +18,10 @@
         android:textColor="@android:color/system_text_primary_inverse_light"
         android:textFontWeight="500" />
 
-    <TextView
-        android:id="@+id/nearest_departures_widget_departures_board"
+    <ListView
+        android:id="@+id/nearestDeparturesListView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="click here to update"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        android:textColor="@android:color/system_text_primary_inverse_light" />
+        tools:listitem="@layout/nearest_departures_widget_list_view_item" />
+
 </LinearLayout>

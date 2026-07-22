@@ -41,12 +41,16 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
         Intent open_app_intent = new Intent(context,MainActivity.class);
         PendingIntent open_app_pending_intent = PendingIntent.getActivity(context,0,open_app_intent,FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.nearest_departures_widget_layout,open_app_pending_intent);
+        //TODO fix on click refresh for listview
         Intent updateIntent = new Intent(context,NearestDeparturesWidget.class);
         updateIntent.setAction(ACTION_REFRESH_DATA); //click departures board to refresh
         views.setOnClickPendingIntent(R.id.nearest_departures_widget_departures_board,PendingIntent.getBroadcast(context,0,updateIntent,FLAG_IMMUTABLE));
         Intent switchStationsIntent = new Intent(context,NearestDeparturesWidget.class);
         switchStationsIntent.setAction(ACTION_SWITCH_STATIONS); //click station name to switch to other nearby stations
         views.setOnClickPendingIntent(R.id.nearest_departures_widget_station_name,PendingIntent.getBroadcast(context,0, switchStationsIntent,FLAG_IMMUTABLE));
+
+        //TODO set empty listview text
+
 
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
