@@ -21,8 +21,6 @@ import java.net.UnknownHostException;
 import java.time.LocalTime;
 import java.util.List;
 
-import stevens.server.nearestdepartures.ui.theme.MainApplication;
-
 public class TimetableFetchWorker extends Worker {
     private final Context context;
     public TimetableFetchWorker(@NonNull Context context, @NonNull WorkerParameters parameters){

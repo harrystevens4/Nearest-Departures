@@ -82,18 +82,12 @@ public class MainActivity extends Activity {
         LDBWS_api_key_entry.setText(LDBWS_api_key);
         knowledgebase_api_key_entry.setText(knowledgebase_api_key);
 
+        //TODO should this be in MainApplication?
         //schedule widget updates
         Intent updateIntent = new Intent(this,NearestDeparturesWidget.class);
         updateIntent.setAction(ACTION_REFRESH_DATA); //click departures board to refresh
         AlarmManager alarm_manager = this.getSystemService(AlarmManager.class);
         alarm_manager.setInexactRepeating(AlarmManager.RTC_WAKEUP,5000,30000, PendingIntent.getBroadcast(this,1, updateIntent,PendingIntent.FLAG_IMMUTABLE));
-        //dummy request required here so that it does not trigger widget update when there is no work left
-        //https://issuetracker.google.com/issues/115575872
-        WorkRequest dummyRequest = new PeriodicWorkRequest.Builder(DummyWorker.class,java.time.Duration.ofSeconds(60))
-                .build();
-        WorkManager
-                .getInstance(getApplicationContext())
-                .enqueue(dummyRequest);
 
         //callbacks
         LDBWS_api_key_entry.addTextChangedListener(new TextWatcher() {
@@ -164,17 +158,5 @@ public class MainActivity extends Activity {
                 .build();
         NotificationManager notification_manager = this.getSystemService(NotificationManager.class);
         notification_manager.notify(0,notification);
-    }
-}
-
-class DummyWorker extends Worker {
-    public DummyWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
-        super(context, workerParams);
-    }
-
-    @NonNull
-    @Override
-    public Result doWork() {
-        return Result.success();
     }
 }

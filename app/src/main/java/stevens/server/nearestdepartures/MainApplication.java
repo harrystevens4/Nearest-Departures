@@ -1,4 +1,4 @@
-package stevens.server.nearestdepartures.ui.theme;
+package stevens.server.nearestdepartures;
 
 import android.Manifest;
 import android.app.Application;
@@ -7,7 +7,13 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.room.Room;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
 
 import com.google.android.gms.location.CurrentLocationRequest;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -16,19 +22,27 @@ import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
-import stevens.server.nearestdepartures.StationInfo;
-import stevens.server.nearestdepartures.StationInfoDao;
-import stevens.server.nearestdepartures.StationInfoDatabase;
 
 public class MainApplication extends Application {
     private final StateManager state = new StateManager(this);
     private final ArrayList<String> currentLocationsCrs = new ArrayList<String>();
     private Location lastLocation;
     private long lastLocationUpdateTimeMs;
+    @Override public void onCreate(){
+        super.onCreate();
+        //dummy request required here so that it does not trigger widget update when there is no work left
+        //https://issuetracker.google.com/issues/115575872
+        //lets just update the location or smth
+        WorkRequest locationUpdateRequest = new PeriodicWorkRequest.Builder(LocationUpdateWorker.class, Duration.ofMinutes(15))
+                .build();
+        Context applicationContext = this.getApplicationContext();
+        WorkManager workManager = WorkManager.getInstance(applicationContext);
+        workManager.enqueue(locationUpdateRequest);
+    }
     public List<String> getStationsCrsByDistance() {
         //initialise if not already
         if (currentLocationsCrs.isEmpty() && lastLocation == null){
@@ -123,5 +137,21 @@ class StateManager {
             Log.d("MainApplication", "database info retrieved");
         }
         return this.stationInfoList;
+    }
+}
+
+class LocationUpdateWorker extends Worker {
+    private final Context context;
+    public LocationUpdateWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+        super(context, workerParams);
+        this.context = context;
+    }
+
+    @NonNull
+    @Override
+    public Result doWork() {
+        MainApplication mainApplication = (MainApplication)context.getApplicationContext();
+        mainApplication.updateLocation();
+        return Result.success();
     }
 }

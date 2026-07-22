@@ -57,6 +57,10 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
         Log.d("NearestDeparturesWidget","onReceive("+intent.getAction()+")");
         if (Objects.equals(intent.getAction(),ACTION_USER_PRESENT)){
             Log.d("NearestDeparturesWidget","Screen on event detected");
+            //update widget
+            Intent updateIntent = new Intent(context,NearestDeparturesWidget.class);
+            updateIntent.setAction(ACTION_REFRESH_DATA);
+            context.sendBroadcast(updateIntent);
         } else if (Objects.equals(intent.getAction(),ACTION_REFRESH_DATA)) {
             //schedule an update
             WorkRequest updateWidgetRequest = new OneTimeWorkRequest.Builder(TimetableFetchWorker.class)
