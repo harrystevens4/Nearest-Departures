@@ -9,4 +9,9 @@ This is useless to you unless you have a darwin LDBWS api key (which you can acq
 
 # How to use
 
-Don't
+If you are competent enough to figure out how to aquire an LDBWS api key you can probably figure out how this works on your own.
+
+# Widget
+
+Clicking the station name cycles between all stations within a 1000m proximity (max 3)
+Clicking anywhere on the departure board updates it
