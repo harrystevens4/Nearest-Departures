@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.util.Log;
+import stevens.server.nearestdepartures.LocationUpdateWorker;
 
 import androidx.annotation.NonNull;
 import androidx.room.Room;
@@ -22,6 +23,7 @@ import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 
+import java.lang.reflect.Parameter;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -37,11 +39,11 @@ public class MainApplication extends Application {
         //dummy request required here so that it does not trigger widget update when there is no work left
         //https://issuetracker.google.com/issues/115575872
         //lets just update the location or smth
-        WorkRequest locationUpdateRequest = new PeriodicWorkRequest.Builder(LocationUpdateWorker.class, Duration.ofMinutes(15))
-                .build();
-        Context applicationContext = this.getApplicationContext();
-        WorkManager workManager = WorkManager.getInstance(applicationContext);
-        workManager.enqueue(locationUpdateRequest);
+//        WorkRequest locationUpdateRequest = new PeriodicWorkRequest.Builder(LocationUpdateWorker.class, Duration.ofMinutes(15))
+//                .build();
+//        Context applicationContext = this.getApplicationContext();
+//        WorkManager workManager = WorkManager.getInstance(applicationContext);
+//        workManager.enqueue(locationUpdateRequest);
     }
     public List<String> getStationsCrsByDistance() {
         //initialise if not already
@@ -137,21 +139,5 @@ class StateManager {
             Log.d("MainApplication", "database info retrieved");
         }
         return this.stationInfoList;
-    }
-}
-
-class LocationUpdateWorker extends Worker {
-    private final Context context;
-    public LocationUpdateWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
-        super(context, workerParams);
-        this.context = context;
-    }
-
-    @NonNull
-    @Override
-    public Result doWork() {
-        MainApplication mainApplication = (MainApplication)context.getApplicationContext();
-        mainApplication.updateLocation();
-        return Result.success();
     }
 }
