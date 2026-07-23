@@ -1,10 +1,15 @@
 package stevens.server.nearestdepartures;
 
+import static android.app.PendingIntent.FLAG_IMMUTABLE;
+import static android.app.PendingIntent.FLAG_MUTABLE;
+import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
+import static android.app.PendingIntent.getBroadcast;
 import static android.content.Context.MODE_PRIVATE;
 
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -79,6 +84,8 @@ public class TimetableFetchWorker extends Worker {
                 String listItemText = departure_time_string+"  "+service.getDestinationName();
                 RemoteViews listItemView = new RemoteViews(context.getPackageName(),R.layout.nearest_departures_widget_list_view_item);
                 listItemView.setTextViewText(R.id.nearest_departures_widget_departures_board, listItemText);
+                Intent fillInIntent = new Intent();
+                listItemView.setOnClickFillInIntent(R.id.nearest_departures_widget_departures_board,fillInIntent);
                 timetableListViewBuilder.addItem(id,listItemView);
                 id++;
             }
@@ -86,19 +93,30 @@ public class TimetableFetchWorker extends Worker {
             views.setTextViewText(R.id.nearest_departures_widget_station_name, departureBoardTitle);
             //update the widget
             views.setRemoteAdapter(R.id.nearestDeparturesListView,timetableListViewBuilder.build());
-            AppWidgetManager app_widget_manager = AppWidgetManager.getInstance(context);
-            //just update all of them rather than re requesting for each one
-            int[] app_widget_ids = app_widget_manager.getAppWidgetIds(new ComponentName(context, NearestDeparturesWidget.class));
-            app_widget_manager.partiallyUpdateAppWidget(app_widget_ids, views);
             Log.d("NearestDeparturesWidget", "updated widget with latest departures");
         } catch (IOException | JSONException | RuntimeException e) {
             Log.e("NearestDeparturesWidget", "error fetching new departures: " + e);
             //show error on widget
             views.setTextViewText(R.id.nearest_departures_widget_station_name, "No departures available");
-            views.setTextViewText(R.id.nearest_departures_widget_departures_board, "you are not in range of a station");
+            //add a prompt to refresh
+            RemoteViews refreshTextView = new RemoteViews(context.getPackageName(),R.layout.nearest_departures_widget_list_view_item);
+            //set refresh intent
+            Intent fillInIntent = new Intent();
+            refreshTextView.setOnClickFillInIntent(R.id.nearest_departures_widget_departures_board,fillInIntent);
+            refreshTextView.setTextViewText(R.id.nearest_departures_widget_departures_board,"Click to refresh");
+            RemoteViews.RemoteCollectionItems listViewItems = new RemoteViews.RemoteCollectionItems.Builder()
+                    .addItem(0,refreshTextView)
+                    .build();
+            views.setRemoteAdapter(R.id.nearestDeparturesListView,listViewItems);
+            Log.e("NearestDeparturesWidget", "updating widget to reflect errors");
+        } finally {
+            //set onclick for listview items
+            Intent updateIntent = new Intent(context,NearestDeparturesWidget.class);
+            updateIntent.setAction("REFRESH_DATA");
+            views.setPendingIntentTemplate(R.id.nearestDeparturesListView,getBroadcast(context,0,updateIntent,FLAG_IMMUTABLE));
+            //app widget update
             AppWidgetManager app_widget_manager = AppWidgetManager.getInstance(context);
             int[] app_widget_ids = app_widget_manager.getAppWidgetIds(new ComponentName(context, NearestDeparturesWidget.class));
-            Log.e("NearestDeparturesWidget", "updating widget to reflect errors");
             app_widget_manager.partiallyUpdateAppWidget(app_widget_ids, views);
         }
         return Result.success();

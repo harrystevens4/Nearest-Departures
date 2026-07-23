@@ -1,6 +1,8 @@
 package stevens.server.nearestdepartures;
 
 import static android.app.PendingIntent.FLAG_IMMUTABLE;
+import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
+import static android.app.PendingIntent.getBroadcast;
 import static android.content.Context.MODE_PRIVATE;
 import static android.content.Intent.ACTION_USER_PRESENT;
 
@@ -19,6 +21,9 @@ import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 
+import org.json.JSONException;
+
+import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -44,13 +49,21 @@ public class NearestDeparturesWidget extends AppWidgetProvider {
         //TODO fix on click refresh for listview
         Intent updateIntent = new Intent(context,NearestDeparturesWidget.class);
         updateIntent.setAction(ACTION_REFRESH_DATA); //click departures board to refresh
-        views.setOnClickPendingIntent(R.id.nearest_departures_widget_departures_board,PendingIntent.getBroadcast(context,0,updateIntent,FLAG_IMMUTABLE));
+        //views.setOnClickPendingIntent(R.id.nearest_departures_widget_departures_board,PendingIntent.getBroadcast(context,0,updateIntent,FLAG_IMMUTABLE));
         Intent switchStationsIntent = new Intent(context,NearestDeparturesWidget.class);
         switchStationsIntent.setAction(ACTION_SWITCH_STATIONS); //click station name to switch to other nearby stations
         views.setOnClickPendingIntent(R.id.nearest_departures_widget_station_name,PendingIntent.getBroadcast(context,0, switchStationsIntent,FLAG_IMMUTABLE));
 
         //TODO set empty listview text
-
+        RemoteViews listItemView = new RemoteViews(context.getPackageName(),R.layout.nearest_departures_widget_list_view_item);
+        listItemView.setTextViewText(R.id.nearest_departures_widget_departures_board, "Click here to load timetable");
+        Intent fillInIntent = new Intent();
+        listItemView.setOnClickFillInIntent(R.id.nearest_departures_widget_departures_board,fillInIntent);
+        RemoteViews.RemoteCollectionItems timetableListViewItems = new RemoteViews.RemoteCollectionItems.Builder()
+                .addItem(0,listItemView)
+                .build();
+        views.setRemoteAdapter(R.id.nearestDeparturesListView,timetableListViewItems);
+        views.setPendingIntentTemplate(R.id.nearestDeparturesListView,getBroadcast(context,0,updateIntent,FLAG_IMMUTABLE));
 
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
