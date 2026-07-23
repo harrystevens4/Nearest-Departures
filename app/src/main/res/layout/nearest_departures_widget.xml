@@ -1,6 +1,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/nearest_departures_widget_layout"
+    android:id="@+id/nearestDeparturesWidgetLayout"
     style="@style/Theme.Material3.DynamicColors.DayNight"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,7 +10,7 @@
     android:padding="15dp">
 
     <TextView
-        android:id="@+id/nearest_departures_widget_station_name"
+        android:id="@+id/nearestDeparturesStationName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="No info available"
@@ -22,6 +22,8 @@
         android:id="@+id/nearestDeparturesListView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:divider="@android:color/system_neutral1_900"
+        android:dividerHeight="2dp"
         tools:listitem="@layout/nearest_departures_widget_list_view_item" />
 
 </LinearLayout>

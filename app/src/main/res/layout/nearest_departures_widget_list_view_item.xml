@@ -1,10 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/nearest_departures_widget_departures_board"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/nearestDeparturesListItemLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:scrollbars="horizontal|vertical"
-    android:text="click here to update"
-    android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-    android:textColor="@android:color/system_text_primary_inverse_light" />
+    android:layout_weight="1">
+
+    <TextView
+        android:id="@+id/nearestDeparturesDepartureTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:paddingRight="10dp"
+        android:text="00:00"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textColor="@android:color/system_text_primary_inverse_light" />
+
+    <TextView
+        android:id="@+id/nearestDeparturesDestinationName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="horizontal|vertical"
+        android:text="click here to update"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textColor="@android:color/system_text_primary_inverse_light" />
+</LinearLayout>

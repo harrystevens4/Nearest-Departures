@@ -1,8 +1,6 @@
 package stevens.server.nearestdepartures;
 
 import static android.app.PendingIntent.FLAG_IMMUTABLE;
-import static android.app.PendingIntent.FLAG_MUTABLE;
-import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.app.PendingIntent.getBroadcast;
 import static android.content.Context.MODE_PRIVATE;
 
@@ -81,29 +79,29 @@ public class TimetableFetchWorker extends Worker {
                 } else {
                     departure_time_string = departure_time.toString();
                 }
-                String listItemText = departure_time_string+"  "+service.getDestinationName();
                 RemoteViews listItemView = new RemoteViews(context.getPackageName(),R.layout.nearest_departures_widget_list_view_item);
-                listItemView.setTextViewText(R.id.nearest_departures_widget_departures_board, listItemText);
+                listItemView.setTextViewText(R.id.nearestDeparturesDestinationName, service.getDestinationName());
+                listItemView.setTextViewText(R.id.nearestDeparturesDepartureTime, departure_time_string);
                 Intent fillInIntent = new Intent();
-                listItemView.setOnClickFillInIntent(R.id.nearest_departures_widget_departures_board,fillInIntent);
+                listItemView.setOnClickFillInIntent(R.id.nearestDeparturesListItemLayout,fillInIntent);
                 timetableListViewBuilder.addItem(id,listItemView);
                 id++;
             }
             //set the station name
-            views.setTextViewText(R.id.nearest_departures_widget_station_name, departureBoardTitle);
+            views.setTextViewText(R.id.nearestDeparturesStationName, departureBoardTitle);
             //update the widget
             views.setRemoteAdapter(R.id.nearestDeparturesListView,timetableListViewBuilder.build());
             Log.d("NearestDeparturesWidget", "updated widget with latest departures");
         } catch (IOException | JSONException | RuntimeException e) {
             Log.e("NearestDeparturesWidget", "error fetching new departures: " + e);
             //show error on widget
-            views.setTextViewText(R.id.nearest_departures_widget_station_name, "No departures available");
+            views.setTextViewText(R.id.nearestDeparturesStationName, "No departures available");
             //add a prompt to refresh
             RemoteViews refreshTextView = new RemoteViews(context.getPackageName(),R.layout.nearest_departures_widget_list_view_item);
             //set refresh intent
             Intent fillInIntent = new Intent();
-            refreshTextView.setOnClickFillInIntent(R.id.nearest_departures_widget_departures_board,fillInIntent);
-            refreshTextView.setTextViewText(R.id.nearest_departures_widget_departures_board,"Click to refresh");
+            refreshTextView.setOnClickFillInIntent(R.id.nearestDeparturesDestinationName,fillInIntent);
+            refreshTextView.setTextViewText(R.id.nearestDeparturesDestinationName,"Click to refresh");
             RemoteViews.RemoteCollectionItems listViewItems = new RemoteViews.RemoteCollectionItems.Builder()
                     .addItem(0,refreshTextView)
                     .build();
