@@ -3,6 +3,7 @@ package stevens.server.nearestdepartures;
 import static android.content.Intent.ACTION_USER_PRESENT;
 
 import static stevens.server.nearestdepartures.NearestDeparturesWidget.ACTION_REFRESH_DATA;
+import static stevens.server.nearestdepartures.SharedPreferenceInfo.*;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -39,6 +40,7 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.color.DynamicColors;
 
 import java.security.Security;
@@ -50,6 +52,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.xml.datatype.Duration;
 
 public class MainActivity extends Activity {
+    //todo this needs to move somewhere more reasonable
+    public static final int SORT_BY_DESTINATION = 0;
+    public static final int SORT_BY_DEPARTURE_TIME = 1;
     private ScheduledExecutorService worker_thread;
     @Override
     public void onCreate(Bundle saved_instance_state){
@@ -68,10 +73,12 @@ public class MainActivity extends Activity {
         Security.setProperty("networkaddress.cache.ttl","-1");
 
         //shared preferences
-        SharedPreferences shared_preferences = this.getSharedPreferences("api_keys", MODE_PRIVATE);
-        SharedPreferences.Editor shared_preferences_editor = shared_preferences.edit();
-        String LDBWS_api_key = shared_preferences.getString("LDBWS","");
-        String knowledgebase_api_key = shared_preferences.getString("knowledgebase","");
+        SharedPreferences apiKeysSharedPreferences = this.getSharedPreferences("api_keys", MODE_PRIVATE);
+        SharedPreferences.Editor apiKeysSharedPreferencesEditor = apiKeysSharedPreferences.edit();
+        String LDBWS_api_key = apiKeysSharedPreferences.getString("LDBWS","");
+        String knowledgebase_api_key = apiKeysSharedPreferences.getString("knowledgebase","");
+        SharedPreferences configurationSharedPreferences = this.getSharedPreferences("configuration", MODE_PRIVATE);
+        int departuresSortingMethod = configurationSharedPreferences.getInt(DEPARTURES_SORTING_METHOD.getFile(), 0);
 
         //building ui
         DynamicColors.applyToActivitiesIfAvailable(this.getApplication());
@@ -81,6 +88,15 @@ public class MainActivity extends Activity {
         Button update_station_database_button = this.findViewById(R.id.update_station_database_button);
         LDBWS_api_key_entry.setText(LDBWS_api_key);
         knowledgebase_api_key_entry.setText(knowledgebase_api_key);
+        ChipGroup departuresSortingMethodChipGroup = findViewById(R.id.departuresSortingMethodChipGroup);
+        switch (departuresSortingMethod) {
+            case SORT_BY_DESTINATION:
+                departuresSortingMethodChipGroup.check(R.id.sortByDestinationChip);
+                break;
+            case SORT_BY_DEPARTURE_TIME:
+                departuresSortingMethodChipGroup.check(R.id.sortByDepartureTimeChip);
+                break;
+        }
 
         //TODO should this be in MainApplication?
         //schedule widget updates
@@ -95,8 +111,8 @@ public class MainActivity extends Activity {
             public void afterTextChanged(Editable editable) {
                 //update LDBWS_api_key when user changes it in the text entry
                 String new_api_key = editable.toString();
-                shared_preferences_editor.putString("LDBWS",new_api_key);
-                shared_preferences_editor.apply();
+                apiKeysSharedPreferencesEditor.putString("LDBWS",new_api_key);
+                apiKeysSharedPreferencesEditor.apply();
             }
             @Override public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
             @Override public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
@@ -106,11 +122,23 @@ public class MainActivity extends Activity {
             public void afterTextChanged(Editable editable) {
                 //update LDBWS_api_key when user changes it in the text entry
                 String new_api_key = editable.toString();
-                shared_preferences_editor.putString("knowledgebase",new_api_key);
-                shared_preferences_editor.apply();
+                apiKeysSharedPreferencesEditor.putString("knowledgebase",new_api_key);
+                apiKeysSharedPreferencesEditor.apply();
             }
             @Override public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
             @Override public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+        });
+        departuresSortingMethodChipGroup.setOnCheckedStateChangeListener(new ChipGroup.OnCheckedStateChangeListener() {
+            @Override
+            public void onCheckedChanged(@NonNull ChipGroup chipGroup, @NonNull List<Integer> list) {
+                int sortingMethod = 0;
+                int checkedChipId = list.get(0);
+                if (checkedChipId == R.id.sortByDestinationChip) sortingMethod = SORT_BY_DESTINATION;
+                if (checkedChipId == R.id.sortByDepartureTimeChip) sortingMethod = SORT_BY_DEPARTURE_TIME;
+                configurationSharedPreferences.edit()
+                        .putInt(DEPARTURES_SORTING_METHOD.getPreferenceName(),sortingMethod)
+                        .apply();
+            }
         });
 
         //request permissions

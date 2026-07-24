@@ -102,4 +102,56 @@
 
     </androidx.cardview.widget.CardView>
 
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginTop="10dp"
+        android:background="@color/cardview_dark_background"
+        android:padding="3dp"
+        app:cardBackgroundColor="@android:color/system_accent1_300"
+        app:cardCornerRadius="20dp"
+        app:contentPadding="15dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textView2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Widget settings"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/departuresSortingMethodChipGroup"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/sortByDestinationChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="true"
+                    android:text="sort by destination" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/sortByDepartureTimeChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="true"
+                    android:text="Sort by departure time" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <Switch
+                android:id="@+id/platformNumberSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Platform number" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
 </LinearLayout>

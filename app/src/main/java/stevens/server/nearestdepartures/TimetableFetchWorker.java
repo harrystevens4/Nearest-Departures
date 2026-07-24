@@ -4,6 +4,8 @@ import static android.app.PendingIntent.FLAG_IMMUTABLE;
 import static android.app.PendingIntent.getBroadcast;
 import static android.content.Context.MODE_PRIVATE;
 
+import static stevens.server.nearestdepartures.SharedPreferenceInfo.DEPARTURES_SORTING_METHOD;
+
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -22,6 +24,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.LocalTime;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class TimetableFetchWorker extends Worker {
@@ -64,6 +68,18 @@ public class TimetableFetchWorker extends Worker {
             NationalRailAPI national_rail_api = new NationalRailAPI(api_key, null);
             NationalRailAPI.Departures station_departures = national_rail_api.getDeparturesFor(selectedStation);
             NationalRailAPI.Departures.TrainService[] services = station_departures.getDepartures();
+            //sort if required
+            int sortMethod = context
+                    .getSharedPreferences(DEPARTURES_SORTING_METHOD.getFile(), MODE_PRIVATE)
+                    .getInt(DEPARTURES_SORTING_METHOD.getPreferenceName(),0);
+            if (sortMethod == MainActivity.SORT_BY_DESTINATION){
+                Arrays.sort(services, new Comparator<NationalRailAPI.Departures.TrainService>() {
+                    @Override
+                    public int compare(NationalRailAPI.Departures.TrainService trainService, NationalRailAPI.Departures.TrainService t1) {
+                        return trainService.getDestinationName().compareTo(t1.getDestinationName());
+                    }
+                });
+            }
             //prepare ListView for population
             RemoteViews.RemoteCollectionItems.Builder timetableListViewBuilder = new RemoteViews.RemoteCollectionItems.Builder();
             //populate departure board

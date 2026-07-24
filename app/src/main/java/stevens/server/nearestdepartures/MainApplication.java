@@ -39,11 +39,11 @@ public class MainApplication extends Application {
         //dummy request required here so that it does not trigger widget update when there is no work left
         //https://issuetracker.google.com/issues/115575872
         //lets just update the location or smth
-//        WorkRequest locationUpdateRequest = new PeriodicWorkRequest.Builder(LocationUpdateWorker.class, Duration.ofMinutes(15))
-//                .build();
-//        Context applicationContext = this.getApplicationContext();
-//        WorkManager workManager = WorkManager.getInstance(applicationContext);
-//        workManager.enqueue(locationUpdateRequest);
+        WorkRequest locationUpdateRequest = new PeriodicWorkRequest.Builder(LocationUpdateWorker.class, Duration.ofMinutes(15))
+                .build();
+        Context applicationContext = this.getApplicationContext();
+        WorkManager workManager = WorkManager.getInstance(applicationContext);
+        workManager.enqueue(locationUpdateRequest);
     }
     public List<String> getStationsCrsByDistance() {
         //initialise if not already
